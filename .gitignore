@@ -1,0 +1,25 @@
+# Unreal generated folders
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+
+# Visual Studio
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build output
+*.target
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.obj
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
