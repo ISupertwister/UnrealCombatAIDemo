@@ -11,10 +11,11 @@ class UHealthComponent;
 UENUM(BlueprintType)
 enum class ECombatEnemyState : uint8
 {
-	Idle	UMETA(DisplayName = "Idle"),
-	Chase	UMETA(DisplayName = "Chase"),
-	Attack	UMETA(DisplayName = "Attack"),
-	Dead	UMETA(DisplayName = "Dead")
+	Idle		UMETA(DisplayName = "Idle"),
+	Chase		UMETA(DisplayName = "Chase"),
+	Attack		UMETA(DisplayName = "Attack"),
+	Investigate	UMETA(DisplayName = "Investigate"),
+	Dead		UMETA(DisplayName = "Dead")
 };
 
 UCLASS()
@@ -53,6 +54,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Movement", meta = (ClampMin = "0.0"))
 	float ChaseSpeed = 450.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Investigation", meta = (ClampMin = "0.0"))
+	float InvestigationWaitTime = 1.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Investigation", meta = (ClampMin = "0.0"))
+	float InvestigationAcceptanceRadius = 100.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Debug")
 	bool bDrawDebug = true;
 
@@ -62,11 +69,20 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	AActor* TargetActor = nullptr;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Investigation")
+	FVector LastKnownTargetLocation = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Investigation")
+	bool bHasLastKnownTargetLocation = false;
+
 	float LastAttackTime = -999.0f;
+	float InvestigationStartTime = 0.0f;
+	bool bHasReachedInvestigationPoint = false;
 
 	void UpdateAI(float DeltaTime);
-	void UpdateStateByDistance(float DistanceToTarget);
+	void UpdateStateByTargetDistance(float DistanceToTarget);
 	void ChaseTarget();
+	void InvestigateLastKnownLocation();
 	void TryAttack();
 	void SetEnemyState(ECombatEnemyState NewState);
 	void DrawDebugInfo() const;

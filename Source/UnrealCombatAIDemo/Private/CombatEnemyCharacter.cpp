@@ -58,7 +58,7 @@ void ACombatEnemyCharacter::UpdateAI(float DeltaTime)
 
 	const float DistanceToTarget = FVector::Dist(GetActorLocation(), TargetActor->GetActorLocation());
 
-	UpdateStateByDistance(DistanceToTarget);
+	UpdateStateByTargetDistance(DistanceToTarget);
 
 	switch (CurrentState)
 	{
@@ -82,25 +82,48 @@ void ACombatEnemyCharacter::UpdateAI(float DeltaTime)
 		TryAttack();
 		break;
 
+	case ECombatEnemyState::Investigate:
+		InvestigateLastKnownLocation();
+		break;
+
 	case ECombatEnemyState::Dead:
 	default:
 		break;
 	}
 }
 
-void ACombatEnemyCharacter::UpdateStateByDistance(float DistanceToTarget)
+void ACombatEnemyCharacter::UpdateStateByTargetDistance(float DistanceToTarget)
 {
-	if (DistanceToTarget <= AttackRange)
+	const bool bTargetDetected = DistanceToTarget <= DetectionRadius;
+
+	if (bTargetDetected)
 	{
-		SetEnemyState(ECombatEnemyState::Attack);
+		LastKnownTargetLocation = TargetActor->GetActorLocation();
+		bHasLastKnownTargetLocation = true;
+		bHasReachedInvestigationPoint = false;
+
+		if (DistanceToTarget <= AttackRange)
+		{
+			SetEnemyState(ECombatEnemyState::Attack);
+		}
+		else
+		{
+			SetEnemyState(ECombatEnemyState::Chase);
+		}
+
+		return;
 	}
-	else if (DistanceToTarget <= DetectionRadius)
+
+	if (CurrentState == ECombatEnemyState::Chase || CurrentState == ECombatEnemyState::Attack)
 	{
-		SetEnemyState(ECombatEnemyState::Chase);
-	}
-	else
-	{
-		SetEnemyState(ECombatEnemyState::Idle);
+		if (bHasLastKnownTargetLocation)
+		{
+			SetEnemyState(ECombatEnemyState::Investigate);
+		}
+		else
+		{
+			SetEnemyState(ECombatEnemyState::Idle);
+		}
 	}
 }
 
@@ -114,6 +137,48 @@ void ACombatEnemyCharacter::ChaseTarget()
 	if (AAIController* AIController = Cast<AAIController>(GetController()))
 	{
 		AIController->MoveToActor(TargetActor, AttackRange * 0.8f);
+	}
+}
+
+void ACombatEnemyCharacter::InvestigateLastKnownLocation()
+{
+	if (!GetWorld() || !bHasLastKnownTargetLocation)
+	{
+		SetEnemyState(ECombatEnemyState::Idle);
+		return;
+	}
+
+	if (AAIController* AIController = Cast<AAIController>(GetController()))
+	{
+		AIController->MoveToLocation(LastKnownTargetLocation, InvestigationAcceptanceRadius);
+	}
+
+	const float DistanceToLastKnownLocation = FVector::Dist(GetActorLocation(), LastKnownTargetLocation);
+
+	if (DistanceToLastKnownLocation <= InvestigationAcceptanceRadius)
+	{
+		if (!bHasReachedInvestigationPoint)
+		{
+			bHasReachedInvestigationPoint = true;
+			InvestigationStartTime = GetWorld()->GetTimeSeconds();
+
+			if (AAIController* AIController = Cast<AAIController>(GetController()))
+			{
+				AIController->StopMovement();
+			}
+
+			UE_LOG(LogTemp, Log, TEXT("%s reached last known target location."), *GetName());
+		}
+
+		const float CurrentTime = GetWorld()->GetTimeSeconds();
+
+		if (CurrentTime - InvestigationStartTime >= InvestigationWaitTime)
+		{
+			bHasLastKnownTargetLocation = false;
+			bHasReachedInvestigationPoint = false;
+
+			SetEnemyState(ECombatEnemyState::Idle);
+		}
 	}
 }
 
@@ -165,6 +230,11 @@ void ACombatEnemyCharacter::SetEnemyState(ECombatEnemyState NewState)
 	}
 
 	CurrentState = NewState;
+
+	if (NewState == ECombatEnemyState::Investigate)
+	{
+		bHasReachedInvestigationPoint = false;
+	}
 
 	if (bLogStateChanges)
 	{
@@ -234,6 +304,31 @@ void ACombatEnemyCharacter::DrawDebugInfo() const
 		);
 	}
 
+	if (bHasLastKnownTargetLocation)
+	{
+		DrawDebugSphere(
+			GetWorld(),
+			LastKnownTargetLocation + FVector(0.0f, 0.0f, 35.0f),
+			35.0f,
+			12,
+			FColor::Orange,
+			false,
+			0.0f,
+			0,
+			2.0f
+		);
+
+		DrawDebugString(
+			GetWorld(),
+			LastKnownTargetLocation + FVector(0.0f, 0.0f, 80.0f),
+			TEXT("Last Known Position"),
+			nullptr,
+			FColor::Orange,
+			0.0f,
+			true
+		);
+	}
+
 	DrawDebugString(
 		GetWorld(),
 		EnemyLocation + FVector(0.0f, 0.0f, 120.0f),
@@ -257,6 +352,9 @@ FString ACombatEnemyCharacter::GetStateName() const
 
 	case ECombatEnemyState::Attack:
 		return TEXT("Attack");
+
+	case ECombatEnemyState::Investigate:
+		return TEXT("Investigate");
 
 	case ECombatEnemyState::Dead:
 		return TEXT("Dead");
