@@ -69,6 +69,21 @@ protected:
 
 public:
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PerformMeleeAttack();
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float MeleeDamage = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float MeleeRange = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float MeleeRadius = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bDrawMeleeDebug = true;
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);

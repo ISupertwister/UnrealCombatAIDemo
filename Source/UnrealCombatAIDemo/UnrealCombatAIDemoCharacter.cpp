@@ -11,6 +11,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "UnrealCombatAIDemo.h"
+#include "HealthComponent.h"
+#include "DrawDebugHelpers.h"
 
 AUnrealCombatAIDemoCharacter::AUnrealCombatAIDemoCharacter()
 {
@@ -130,4 +132,70 @@ void AUnrealCombatAIDemoCharacter::DoJumpEnd()
 {
 	// signal the character to stop jumping
 	StopJumping();
+}
+void AUnrealCombatAIDemoCharacter::PerformMeleeAttack()
+{
+	FVector StartLocation = GetActorLocation() + FVector(0.0f, 0.0f, 50.0f);
+	FVector EndLocation = StartLocation + (GetActorForwardVector() * MeleeRange);
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	FHitResult HitResult;
+
+	bool bHit = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		StartLocation,
+		EndLocation,
+		FQuat::Identity,
+		ECC_Pawn,
+		FCollisionShape::MakeSphere(MeleeRadius),
+		QueryParams
+	);
+
+	if (bDrawMeleeDebug)
+	{
+		FColor DebugColor = bHit ? FColor::Green : FColor::Red;
+
+		DrawDebugSphere(
+			GetWorld(),
+			EndLocation,
+			MeleeRadius,
+			16,
+			DebugColor,
+			false,
+			1.0f
+		);
+
+		DrawDebugLine(
+			GetWorld(),
+			StartLocation,
+			EndLocation,
+			DebugColor,
+			false,
+			1.0f,
+			0,
+			2.0f
+		);
+	}
+
+	if (!bHit || !HitResult.GetActor())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Melee attack missed."));
+		return;
+	}
+
+	AActor* HitActor = HitResult.GetActor();
+
+	UHealthComponent* TargetHealth = HitActor->FindComponentByClass<UHealthComponent>();
+
+	if (!TargetHealth)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Melee hit %s, but it has no HealthComponent."), *HitActor->GetName());
+		return;
+	}
+
+	TargetHealth->ApplyDamage(MeleeDamage);
+
+	UE_LOG(LogTemp, Log, TEXT("Melee hit %s for %.1f damage."), *HitActor->GetName(), MeleeDamage);
 }
