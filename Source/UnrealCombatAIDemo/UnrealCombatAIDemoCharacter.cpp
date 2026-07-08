@@ -195,6 +195,12 @@ void AUnrealCombatAIDemoCharacter::PerformMeleeAttack()
 		return;
 	}
 
+	if (TargetHealth->IsDead())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Melee hit %s, but it is already dead."), *HitActor->GetName());
+		return;
+	}
+
 	TargetHealth->ApplyDamage(MeleeDamage);
 
 	UE_LOG(LogTemp, Log, TEXT("Melee hit %s for %.1f damage."), *HitActor->GetName(), MeleeDamage);
