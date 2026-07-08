@@ -54,15 +54,18 @@ The goal is to create a small but polished gameplay systems demo rather than a f
 
 
 
-\## Current Status
+## Current Status
 
+Project setup is complete. A reusable C++ Health Component has been implemented and tested on the player character.
 
+## Implemented Features
 
-Project setup is complete. The first gameplay system, a reusable Health Component, is currently being implemented.
-
-
-
-\## Portfolio Focus
+- Reusable C++ Health Component
+- Max health / current health handling
+- Blueprint-callable damage, heal, and reset functions
+- Health percentage and death state accessors
+- Blueprint event dispatchers for health changes and death
+- Output Log debug messages for testing
 
 
 
