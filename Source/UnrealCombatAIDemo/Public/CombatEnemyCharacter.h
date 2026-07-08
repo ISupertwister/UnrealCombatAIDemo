@@ -32,6 +32,15 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintCallable, Category = "AI|Debug")
+	void SetDebugVisualizationEnabled(bool bEnabled);
+
+	UFUNCTION(BlueprintCallable, Category = "AI|Debug")
+	void ToggleDebugVisualization();
+
+	UFUNCTION(BlueprintPure, Category = "AI|Debug")
+	bool IsDebugVisualizationEnabled() const;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UHealthComponent* HealthComponent;

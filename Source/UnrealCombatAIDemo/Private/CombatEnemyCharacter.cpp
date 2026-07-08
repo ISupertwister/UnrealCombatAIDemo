@@ -363,3 +363,18 @@ FString ACombatEnemyCharacter::GetStateName() const
 		return TEXT("Unknown");
 	}
 }
+
+void ACombatEnemyCharacter::SetDebugVisualizationEnabled(bool bEnabled)
+{
+	bDrawDebug = bEnabled;
+}
+
+void ACombatEnemyCharacter::ToggleDebugVisualization()
+{
+	bDrawDebug = !bDrawDebug;
+}
+
+bool ACombatEnemyCharacter::IsDebugVisualizationEnabled() const
+{
+	return bDrawDebug;
+}
