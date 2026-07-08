@@ -15,7 +15,9 @@ public class UnrealCombatAIDemo : ModuleRules
 			"InputCore",
 			"EnhancedInput",
 			"AIModule",
-			"StateTreeModule",
+            "NavigationSystem",
+            "GameplayTasks",
+            "StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate"
