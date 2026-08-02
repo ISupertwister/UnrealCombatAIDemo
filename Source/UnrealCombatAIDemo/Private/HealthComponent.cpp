@@ -20,8 +20,22 @@ void UHealthComponent::BeginPlay()
 
 void UHealthComponent::ApplyDamage(float DamageAmount)
 {
-	if (bIsDead || DamageAmount <= 0.0f)
+	if (DamageAmount <= 0.0f)
 	{
+		return;
+	}
+
+	if (bIsDead)
+	{
+		return;
+	}
+
+	if (bIsInvulnerable)
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s ignored %.1f damage because it is invulnerable."),
+			*GetOwner()->GetName(),
+			DamageAmount);
+
 		return;
 	}
 
@@ -67,6 +81,7 @@ void UHealthComponent::ResetHealth()
 {
 	CurrentHealth = MaxHealth;
 	bIsDead = false;
+	bIsInvulnerable = false;
 
 	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 
@@ -99,4 +114,18 @@ float UHealthComponent::GetHealthPercent() const
 bool UHealthComponent::IsDead() const
 {
 	return bIsDead;
+}
+
+void UHealthComponent::SetInvulnerable(bool bNewInvulnerable)
+{
+	bIsInvulnerable = bNewInvulnerable;
+
+	UE_LOG(LogTemp, Log, TEXT("%s invulnerability %s."),
+		*GetOwner()->GetName(),
+		bIsInvulnerable ? TEXT("enabled") : TEXT("disabled"));
+}
+
+bool UHealthComponent::IsInvulnerable() const
+{
+	return bIsInvulnerable;
 }

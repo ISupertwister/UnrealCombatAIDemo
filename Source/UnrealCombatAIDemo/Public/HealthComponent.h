@@ -29,6 +29,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
 	bool bIsDead = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
+	bool bIsInvulnerable = false;
+
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Health")
 	FOnDeath OnDeath;
@@ -56,4 +59,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Health")
 	bool IsDead() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	void SetInvulnerable(bool bNewInvulnerable);
+
+	UFUNCTION(BlueprintPure, Category = "Health")
+	bool IsInvulnerable() const;
 };
