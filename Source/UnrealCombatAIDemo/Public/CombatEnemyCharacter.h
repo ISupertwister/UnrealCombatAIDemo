@@ -67,6 +67,9 @@ protected:
 	float InvestigationWaitTime = 1.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Investigation", meta = (ClampMin = "0.0"))
+	float InvestigationTimeout = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Investigation", meta = (ClampMin = "0.0"))
 	float InvestigationAcceptanceRadius = 100.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Debug")
@@ -74,6 +77,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Debug")
 	bool bLogStateChanges = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Debug")
+	bool bDrawLineOfSightDebug = true;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	AActor* TargetActor = nullptr;
@@ -86,15 +92,17 @@ protected:
 
 	float LastAttackTime = -999.0f;
 	float InvestigationStartTime = 0.0f;
+	float InvestigationStateStartTime = 0.0f;
 	bool bHasReachedInvestigationPoint = false;
 
 	void UpdateAI(float DeltaTime);
 	void UpdateStateByTargetDistance(float DistanceToTarget);
+	bool HasLineOfSightToTarget() const;
 	void ChaseTarget();
 	void InvestigateLastKnownLocation();
 	void TryAttack();
 	void SetEnemyState(ECombatEnemyState NewState);
-	void DrawDebugInfo() const;
+	void DrawDebugInfo() const;	
 
 	UFUNCTION()
 	void HandleDeath();

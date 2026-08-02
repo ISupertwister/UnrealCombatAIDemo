@@ -92,11 +92,54 @@ void ACombatEnemyCharacter::UpdateAI(float DeltaTime)
 	}
 }
 
+bool ACombatEnemyCharacter::HasLineOfSightToTarget() const
+{
+	if (!TargetActor || !GetWorld())
+	{
+		return false;
+	}
+
+	const FVector StartLocation = GetActorLocation() + FVector(0.0f, 0.0f, 80.0f);
+	const FVector EndLocation = TargetActor->GetActorLocation() + FVector(0.0f, 0.0f, 80.0f);
+
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	QueryParams.AddIgnoredActor(TargetActor);
+
+	const bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		StartLocation,
+		EndLocation,
+		ECC_Visibility,
+		QueryParams
+	);
+
+	const bool bHasLineOfSight = !bHit;
+
+	if (bDrawDebug && bDrawLineOfSightDebug)
+	{
+		DrawDebugLine(
+			GetWorld(),
+			StartLocation,
+			EndLocation,
+			bHasLineOfSight ? FColor::Green : FColor::Red,
+			false,
+			0.05f,
+			0,
+			2.5f
+		);
+	}
+
+	return bHasLineOfSight;
+}
+
 void ACombatEnemyCharacter::UpdateStateByTargetDistance(float DistanceToTarget)
 {
-	const bool bTargetDetected = DistanceToTarget <= DetectionRadius;
+	const bool bTargetInDetectionRange = DistanceToTarget <= DetectionRadius;
+	const bool bCanSeeTarget = bTargetInDetectionRange && HasLineOfSightToTarget();
 
-	if (bTargetDetected)
+	if (bCanSeeTarget)
 	{
 		LastKnownTargetLocation = TargetActor->GetActorLocation();
 		bHasLastKnownTargetLocation = true;
@@ -152,6 +195,24 @@ void ACombatEnemyCharacter::InvestigateLastKnownLocation()
 		return;
 	}
 
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+
+	if (!bHasReachedInvestigationPoint && CurrentTime - InvestigationStateStartTime >= InvestigationTimeout)
+	{
+		bHasLastKnownTargetLocation = false;
+		bHasReachedInvestigationPoint = false;
+
+		if (AAIController* AIController = Cast<AAIController>(GetController()))
+		{
+			AIController->StopMovement();
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("%s investigation timed out."), *GetName());
+
+		SetEnemyState(ECombatEnemyState::Idle);
+		return;
+	}
+
 	if (AAIController* AIController = Cast<AAIController>(GetController()))
 	{
 		AIController->MoveToLocation(LastKnownTargetLocation, InvestigationAcceptanceRadius);
@@ -164,7 +225,7 @@ void ACombatEnemyCharacter::InvestigateLastKnownLocation()
 		if (!bHasReachedInvestigationPoint)
 		{
 			bHasReachedInvestigationPoint = true;
-			InvestigationStartTime = GetWorld()->GetTimeSeconds();
+			InvestigationStartTime = CurrentTime;
 
 			if (AAIController* AIController = Cast<AAIController>(GetController()))
 			{
@@ -173,8 +234,6 @@ void ACombatEnemyCharacter::InvestigateLastKnownLocation()
 
 			UE_LOG(LogTemp, Log, TEXT("%s reached last known target location."), *GetName());
 		}
-
-		const float CurrentTime = GetWorld()->GetTimeSeconds();
 
 		if (CurrentTime - InvestigationStartTime >= InvestigationWaitTime)
 		{
@@ -236,9 +295,10 @@ void ACombatEnemyCharacter::SetEnemyState(ECombatEnemyState NewState)
 	CurrentState = NewState;
 
 	if (NewState == ECombatEnemyState::Investigate)
-	{
-		bHasReachedInvestigationPoint = false;
-	}
+{
+	bHasReachedInvestigationPoint = false;
+	InvestigationStateStartTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
+}
 
 	if (bLogStateChanges)
 	{
