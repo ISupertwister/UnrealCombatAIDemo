@@ -136,7 +136,11 @@ void ACombatEnemyCharacter::ChaseTarget()
 
 	if (AAIController* AIController = Cast<AAIController>(GetController()))
 	{
-		AIController->MoveToActor(TargetActor, AttackRange * 0.8f);
+		AIController->MoveToActor(
+			TargetActor,
+			25.0f,
+			false
+		);
 	}
 }
 
